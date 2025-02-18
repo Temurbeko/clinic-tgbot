@@ -1,0 +1,19 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Patient {
+  id          Int      @id @default(autoincrement())
+  openmrsId   String   @unique
+  phone       String   @unique
+  testResults Json?    // Now supports a JSON record (i.e. Record<any, any>)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  firstName   String
+  lastName    String
+}
