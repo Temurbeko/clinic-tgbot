@@ -1,6 +1,6 @@
-// src/telegram/telegram.service.ts
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
+import { formatDateUzbekLocale } from 'utils/formatDate';
 import { PatientsService } from '../patients/patients.service';
 
 @Injectable()
@@ -17,44 +17,71 @@ export class TelegramService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // /start command
+    // /start command: sends a welcome message with a "Share Contact" button.
     this.bot.start((ctx) => {
       ctx.reply(
-        'Welcome to the Clinic Bot!\n\nUse /getbyid <OpenMRS_ID> or /getbyphone <phone> to get your test results.'
+        '👩‍⚕️Alfatim klinikasiga hush kelibsiz!\n\nIltimos, pastdagi knopka orqali raqaminigzni ulashing, yoki laborant bergan ID raqaminigzni kiriting!.',
+        {
+          reply_markup: {
+            keyboard: [[{ text: 'Raqamimni berish', request_contact: true }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
+        },
       );
     });
 
-    // Command: /getbyid <OpenMRS_ID>
-    this.bot.command('getbyid', async (ctx) => {
-      const parts = ctx.message.text.split(' ');
-      if (parts.length < 2) {
-        return ctx.reply('Please provide your OpenMRS ID. Usage: /getbyid <OpenMRS_ID>');
-      }
-      const openmrsId = parts[1];
-      const patient = await this.patientsService.findByOpenmrsId(openmrsId);
-      if (patient) {
-        ctx.reply(`Test Results: ${patient.testResults || 'No results available.'}`);
-      } else {
-        ctx.reply('Patient not found.');
-      }
-    });
-
-    // Command: /getbyphone <phone>
-    this.bot.command('getbyphone', async (ctx) => {
-      const parts = ctx.message.text.split(' ');
-      if (parts.length < 2) {
-        return ctx.reply('Please provide your phone number. Usage: /getbyphone <phone>');
-      }
-      const phone = parts[1];
+    // Handler for receiving contact details.
+    this.bot.on('contact', async (ctx) => {
+      const phone = ctx.message.contact.phone_number;
+      
       const patient = await this.patientsService.findByPhone(phone);
       if (patient) {
-        ctx.reply(`Test Results: ${patient.testResults || 'No results available.'}`);
+        if (patient.labResults && patient.labResults.length > 0) {
+          let message = `${patient.firstName}, Sizning labaratoriya natijalarnigiz:\n\n`;
+          patient.labResults.forEach((lr) => {
+            message += `Nomi: ${lr.name}\n Holati: ${lr.status}\n Natijasi: ${lr.result}\n Topshirilgan vaqti: ${formatDateUzbekLocale(lr.createdDate)}\n O'zgargan vaqti: ${formatDateUzbekLocale(lr.updatedDate)}\n\n`;
+          });
+          ctx.reply(message);
+        } else {
+          ctx.reply('Siz hozircha labaratoriyaga test topshirmagansiz!.');
+        }
       } else {
-        ctx.reply('Patient not found.');
+        ctx.reply(
+          `Bunday raqamli bemor topilmadi ${ctx.message.contact.phone_number}. Agar test labaratoriyaga topshirgan bolsangiz ID raqamingizni kiriting yoki bizga murojat qiling!.`,
+        );
       }
     });
 
-    // Launch the bot
+    // Handler for plain text messages assumed to be an OpenMRS ID.
+    this.bot.on('text', async (ctx) => {
+      // Ignore commands.
+      if (ctx.message.text.startsWith('/')) {
+        return;
+      }
+      const openmrsId = ctx.message.text.trim();
+      console.log(openmrsId);
+      
+      const patient = await this.patientsService.findByOpenmrsId(openmrsId);
+      
+      if (patient) {
+        if (patient.labResults && patient.labResults.length > 0) {
+          let message = 'Your Lab Results:\n\n';
+          patient.labResults.forEach((lr) => {
+            message += `Name: ${lr.name}\nStatus: ${lr.status}\nResult: ${lr.result}\nCreated: ${formatDateUzbekLocale(lr.createdDate)}\nUpdated: ${formatDateUzbekLocale(lr.updatedDate)}\n\n`;
+          });
+          ctx.reply(message);
+        } else {
+          ctx.reply('Siz hozircha labaratoriyaga test topshirmagansiz!');
+        }
+      } else {
+        ctx.reply(
+          'Agar test labaratoriyaga topshirgan bolsangiz ID raqamingizni qayta kiriting yoki bizga murojat qiling!.',
+        );
+      }
+    });
+
+    // Launch the Telegram bot.
     this.bot.launch();
     this.logger.log('Telegram bot started');
   }

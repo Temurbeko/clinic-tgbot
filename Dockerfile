@@ -1,20 +1,21 @@
-# Use Node.js 22 as base image
-FROM node:22-alpine AS builder
-WORKDIR /app
-# Copy package.json and package-lock.json and install dependencies
-COPY package*.json ./
-RUN npm install
-# Copy the rest of the source code and build the project
-COPY . .
-RUN npm run build
+# Use official Node.js image
+FROM node:18
 
-FROM node:22-alpine AS runner
+# Set the working directory
 WORKDIR /app
-ENV NODE_ENV=production
-# Install only production dependencies
-COPY package*.json ./
-RUN npm install --only=production
-# Copy the built files from the builder stage
-COPY --from=builder /app/dist ./dist
+
+# Copy package.json and install dependencies
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy the rest of the app files
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Expose the port
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+
+# Start the application
+CMD ["npm", "run", "start:dev"]

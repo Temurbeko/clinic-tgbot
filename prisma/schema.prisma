@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -8,12 +9,25 @@ generator client {
 }
 
 model Patient {
+  id         Int         @id @default(autoincrement())
+  openmrsId  String      @unique
+  phone      String?     @unique
+  firstName  String
+  lastName   String?
+  labResults LabResult[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([firstName, lastName])
+}
+
+model LabResult {
   id          Int      @id @default(autoincrement())
-  openmrsId   String   @unique
-  phone       String   @unique
-  testResults Json?    // Now supports a JSON record (i.e. Record<any, any>)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  firstName   String
-  lastName    String
+  status      String
+  name        String
+  result      String
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  patientId   Int
+  patient     Patient  @relation(fields: [patientId], references: [id])
 }
