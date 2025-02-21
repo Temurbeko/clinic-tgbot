@@ -1,7 +1,9 @@
+import * as fs from 'fs';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Telegraf } from 'telegraf';
 import { formatDateUzbekLocale } from 'utils/formatDate';
 import { PatientsService } from '../patients/patients.service';
+import { generateLabResultsPDF } from 'src/utils/pdfGenerator';
 
 @Injectable()
 export class TelegramService implements OnModuleInit {
@@ -34,21 +36,37 @@ export class TelegramService implements OnModuleInit {
     // Handler for receiving contact details.
     this.bot.on('contact', async (ctx) => {
       const phone = ctx.message.contact.phone_number;
-      
       const patient = await this.patientsService.findByPhone(phone);
+
       if (patient) {
         if (patient.labResults && patient.labResults.length > 0) {
-          let message = `${patient.firstName}, Sizning labaratoriya natijalarnigiz:\n\n`;
-          patient.labResults.forEach((lr) => {
-            message += `Nomi: ${lr.name}\n Holati: ${lr.status}\n Natijasi: ${lr.result}\n Topshirilgan vaqti: ${formatDateUzbekLocale(lr.createdDate)}\n O'zgargan vaqti: ${formatDateUzbekLocale(lr.updatedDate)}\n\n`;
+          ctx.reply(
+            `${patient.firstName}, laborotoriya natijalaringiz PDF fayl sifatida tayyorlanmoqda...`,
+          );
+
+          // Generate PDF
+          const pdfPath = await generateLabResultsPDF(patient);
+
+          // Send PDF
+          await ctx.replyWithDocument({
+            source: pdfPath,
+            filename: `lab_results_${patient.id}.pdf`,
           });
-          ctx.reply(message);
+
+          // Clean up file after sending
+
+          setTimeout(() => {
+            fs.unlink(pdfPath, (err) => {
+              if (err)
+                console.error(`Failed to delete PDF file: ${err.message}`);
+            });
+          }, 5000);
         } else {
-          ctx.reply('Siz hozircha labaratoriyaga test topshirmagansiz!.');
+          ctx.reply('Siz hozircha labaratoriyaga test topshirmagansiz!');
         }
       } else {
         ctx.reply(
-          `Bunday raqamli bemor topilmadi ${ctx.message.contact.phone_number}. Agar test labaratoriyaga topshirgan bolsangiz ID raqamingizni kiriting yoki bizga murojat qiling!.`,
+          `Bunday raqamli bemor topilmadi ${ctx.message.contact.phone_number}.`,
         );
       }
     });
@@ -61,9 +79,9 @@ export class TelegramService implements OnModuleInit {
       }
       const openmrsId = ctx.message.text.trim();
       console.log(openmrsId);
-      
+
       const patient = await this.patientsService.findByOpenmrsId(openmrsId);
-      
+
       if (patient) {
         if (patient.labResults && patient.labResults.length > 0) {
           let message = 'Your Lab Results:\n\n';
