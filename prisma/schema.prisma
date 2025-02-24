@@ -13,21 +13,39 @@ model Patient {
   openmrsId  String      @unique
   phone      String?     @unique
   firstName  String
-  lastName   String?
+  lastName   String
   labResults LabResult[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([firstName, lastName])
 }
 
 model LabResult {
-  id          Int      @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
+  name         String
+  status       String
+  createdDate  DateTime      @default(now())
+  updatedDate  DateTime      @updatedAt
+  patientId    Int
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  groupResults GroupResult[]
+}
+
+model GroupResult {
+  id          Int       @id @default(autoincrement())
+  labResultId Int
+  labResult   LabResult @relation(fields: [labResultId], references: [id])
+  conceptUuid String
   status      String
-  name        String
-  result      String
-  createdDate DateTime @default(now())
-  updatedDate DateTime @updatedAt
-  patientId   Int
-  patient     Patient  @relation(fields: [patientId], references: [id])
+  orderUuid   String
+  display     String
+  value       String
+  units       String?
+  hiAbsolute  Float?
+  lowAbsolute Float?
+  
+  hiNormal    Float?
+  lowNormal   Float?
 }
