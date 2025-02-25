@@ -1,8 +1,11 @@
 {
-  "$schema": "https://json.schemastore.org/nest-cli",
-  "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "deleteOutDir": true
-  }
+    "outDir": "./dist",
+    "module": "commonjs", 
+    "target": "es2017",
+    "sourceMap": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

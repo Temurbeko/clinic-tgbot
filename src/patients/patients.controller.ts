@@ -1,33 +1,40 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+// src/patients/patients.controller.ts
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { PatientsService } from './patients.service';
-import { CreatePatientDto } from './dto/create-patient.dto';
-import { UpdatePatientDto } from './dto/update-patient.dto';
-import { Patient } from '@prisma/client';
 
 @Controller('patients')
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
 
+  // Endpoint for patient creation or updating lab results
   @Post()
-  async create(@Body() createPatientDto: CreatePatientDto): Promise<Patient> {
-    return this.patientsService.createPatient(createPatientDto);
+  async createOrUpdatePatient(
+    @Body()
+    body: {
+      openmrsId: string;
+      phone?: string;
+      firstName: string;
+      lastName: string;
+      labResult?: { status: string; name: string; result: string };
+    },
+  ) {
+    return this.patientsService.createOrUpdatePatient(body);
   }
 
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updatePatientDto: UpdatePatientDto,
-  ): Promise<Patient> {
-    return this.patientsService.updatePatient(+id, updatePatientDto);
-  }
-
+  // Retrieve patient by OpenMRS ID including lab results
   @Get('by-openmrs/:openmrsId')
-  async getByOpenmrsId(@Param('openmrsId') openmrsId: string): Promise<Patient | null> {
+  async getPatientByOpenmrsId(@Param('openmrsId') openmrsId: string) {
     return this.patientsService.findByOpenmrsId(openmrsId);
   }
 
+  // Retrieve patient by phone including lab results
   @Get('by-phone/:phone')
-  async getByPhone(@Param('phone') phone: string): Promise<Patient | null> {
+  async getPatientByPhone(@Param('phone') phone: string) {
     return this.patientsService.findByPhone(phone);
+  }
+
+  @Get()
+  async getAllPatients() {
+    return await this.patientsService.findAll();
   }
 }
