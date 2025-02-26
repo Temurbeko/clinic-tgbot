@@ -41,9 +41,9 @@ export async function generateLabResultsPDF(patient) {
               (result) => `
             <tr>
               <td>${result.display}</td>
-              <td>${result.value} (${result.units})</td>
-              <td>${result.hiNormal || ''}</td>
-              <td>${result.lowNormal || ''}</td>
+              <td>${result.value} ${`(${result.units})` || ''}</td>
+              <td>${result.hiNormal || '-'}</td>
+              <td>${result.lowNormal || '-'}</td>
             </tr>
           `,
             )

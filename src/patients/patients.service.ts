@@ -23,6 +23,11 @@ interface CommonInputs {
   value?: string;
   // For a group input, use groupMembers instead of value.
   groupMembers?: GroupMember[];
+  units?: string;
+  hiAbsolute?: number;
+  hiNormal?: number;
+  lowAbsolute?: number;
+  lowNormal?: number;
 }
 
 interface LabResultInput {
@@ -40,6 +45,18 @@ interface CreateOrUpdatePatientInput {
   firstName: string;
   lastName: string;
   labResults?: LabResultInput[];
+}
+interface GroupResultsDataInput {
+  conceptUuid: string;
+  status: string;
+  orderUuid: string;
+  display: string;
+  value: string;
+  units?: string;
+  hiAbsolute?: number;
+  hiNormal?: number;
+  lowAbsolute?: number;
+  lowNormal?: number;
 }
 
 @Injectable()
@@ -74,7 +91,7 @@ export class PatientsService {
       if (data.labResults && data.labResults.length > 0) {
         for (const lab of data.labResults) {
           // Explicitly type the temporary array.
-          const groupResultsData: any[] = [];
+          const groupResultsData: GroupResultsDataInput[] = [];
 
           for (const r of lab.result) {
             if (r.groupMembers && r.groupMembers.length > 0) {
@@ -102,6 +119,11 @@ export class PatientsService {
                 orderUuid: r.order.uuid,
                 display: r.display,
                 value: parsed,
+                units: r.units,
+                hiAbsolute: r.hiAbsolute,
+                hiNormal: r.hiNormal,
+                lowAbsolute: r.lowAbsolute,
+                lowNormal: r.lowNormal,
               });
             }
           }
@@ -140,18 +162,16 @@ export class PatientsService {
         labResults: data.labResults
           ? {
               create: data.labResults.map((lab) => {
-                const groupResultsData: {
-                  conceptUuid: string;
-                  status: string;
-                  orderUuid: string;
-                  display: string;
-                  value: string;
-                }[] = [];
+                const groupResultsData: GroupResultsDataInput[] = [];
                 for (const r of lab.result) {
                   if (r.groupMembers && r.groupMembers.length > 0) {
                     for (const gm of r.groupMembers) {
                       groupResultsData.push({
-                        ...gm,
+                        units: gm.units,
+                        hiAbsolute: gm.hiAbsolute,
+                        hiNormal: gm.hiNormal,
+                        lowAbsolute: gm.lowAbsolute,
+                        lowNormal: gm.lowNormal,
                         conceptUuid: gm.concept.uuid,
                         status: gm.status,
                         orderUuid: gm.order.uuid,
@@ -162,7 +182,11 @@ export class PatientsService {
                   } else if (r.value !== undefined) {
                     const parsed = String(r.value);
                     groupResultsData.push({
-                      ...r,
+                      units: r.units,
+                      hiAbsolute: r.hiAbsolute,
+                      hiNormal: r.hiNormal,
+                      lowAbsolute: r.lowAbsolute,
+                      lowNormal: r.lowNormal,
                       conceptUuid: r.concept.uuid,
                       status: r.status,
                       orderUuid: r.order.uuid,
