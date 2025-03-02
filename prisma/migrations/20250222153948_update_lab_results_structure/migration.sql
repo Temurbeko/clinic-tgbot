@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE "GroupResult" ADD COLUMN     "hiAbsolute" DOUBLE PRECISION,
-ADD COLUMN     "hiNormal" DOUBLE PRECISION,
-ADD COLUMN     "lowAbsolute" DOUBLE PRECISION,
-ADD COLUMN     "lowNormal" DOUBLE PRECISION,
-ADD COLUMN     "units" TEXT;

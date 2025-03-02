@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh\r
 set -e
 
 echo "Waiting for PostgreSQL..."
@@ -7,6 +7,7 @@ until pg_isready -h postgres -p 5432; do
 done
 echo "PostgreSQL is up - executing commands"
 
+npx prisma migrate reset --force
 npx prisma generate
 npx prisma migrate deploy
 

@@ -233,4 +233,18 @@ export class PatientsService {
       include: { labResults: { include: { groupResults: true } } },
     });
   }
+
+  async findByTelegramId(telegramId: string) {
+    return this.prisma.patient.findUnique({
+      where: { telegramId },
+      include: { labResults: { include: { groupResults: true } } },
+    });
+  }
+
+  async updateTelegramId(patientId: number, telegramId: string) {
+    return this.prisma.patient.update({
+      where: { id: patientId },
+      data: { telegramId },
+    });
+  }
 }

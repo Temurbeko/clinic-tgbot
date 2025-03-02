@@ -9,10 +9,11 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
-
 model Patient {
-  id         Int         @id @default(autoincrement())
-  openmrsId  String      @unique
+  id         Int     @id @default(autoincrement())
+  openmrsId  String  @unique
+  telegramId String? @unique
+
   phone      String?     @unique
   firstName  String
   lastName   String
@@ -44,7 +45,7 @@ model GroupResult {
   orderUuid   String
   display     String
   value       String
-  
+
   units       String?
   hiAbsolute  Float?
   lowAbsolute Float?
